@@ -131,7 +131,7 @@ with tab_email:
 
         with col2:
             tone = st.selectbox("Tone", ["Professional", "Formal", "Polite", "Friendly", "Urgent"])
-            length = st.selectbox("Length", ["Standard", "Concise", "Detailed"])
+            length = st.selectbox("Length", ["Detailed", "Standard", "Concise"], index=0, help="Choose 'Detailed' for comprehensive, multi-paragraph drafts.")
             details = st.text_area(
                 "Important Details / Main Message *",
                 placeholder="State reason, dates, context, handovers, contact details...",
@@ -185,7 +185,7 @@ with tab_email:
 
         # Refinement Actions
         st.markdown("**⚡ Refine Draft:**")
-        ref_c1, ref_c2, ref_c3, ref_c4 = st.columns(4)
+        ref_c1, ref_c2, ref_c3, ref_c4, ref_c5 = st.columns(5)
 
         with ref_c1:
             if st.button("👔 More Formal", key="btn_em_formal", use_container_width=True):
@@ -195,20 +195,27 @@ with tab_email:
                     st.rerun()
 
         with ref_c2:
+            if st.button("📝 More Detailed", key="btn_em_detailed", use_container_width=True):
+                with st.spinner("Elaborating email..."):
+                    revised = refine_draft(edited_email, "Substantially expand and elaborate this email draft with comprehensive context, multi-paragraph explanations, background reasoning, timeline/coverage details, and structured next steps while preserving all core facts.", model=selected_model)
+                    st.session_state.current_email["text"] = revised
+                    st.rerun()
+
+        with ref_c3:
             if st.button("✂️ More Concise", key="btn_em_concise", use_container_width=True):
                 with st.spinner("Refining..."):
                     revised = refine_draft(edited_email, "Make this email draft concise, brief, and direct while preserving all essential details.", model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
-        with ref_c3:
+        with ref_c4:
             if st.button("✨ Fix Grammar", key="btn_em_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
                     revised = refine_draft(edited_email, "Correct all grammar, spelling, punctuation, and phrasing issues while keeping the meaning intact.", model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
-        with ref_c4:
+        with ref_c5:
             if st.button("🗑️ Clear Draft", key="btn_em_clear", use_container_width=True):
                 st.session_state.current_email = None
                 st.rerun()
@@ -272,7 +279,7 @@ with tab_letter:
         with col2:
             subject = st.text_input("Subject *", placeholder="e.g., Request for Semester On-Duty Permission")
             tone = st.selectbox("Tone", ["Formal", "Respectful", "Firm", "Polite"])
-            length = st.selectbox("Length", ["Standard", "Concise", "Detailed"])
+            length = st.selectbox("Length", ["Detailed", "Standard", "Concise"], index=0, help="Choose 'Detailed' for extensive, multi-paragraph formal letters.")
             details = st.text_area(
                 "Letter Purpose & Specific Details *",
                 placeholder="Explain the background, reason, dates, attached documents, or specific requests...",
@@ -326,7 +333,7 @@ with tab_letter:
 
         # Refinement Actions
         st.markdown("**⚡ Refine Draft:**")
-        ref_c1, ref_c2, ref_c3, ref_c4 = st.columns(4)
+        ref_c1, ref_c2, ref_c3, ref_c4, ref_c5 = st.columns(5)
 
         with ref_c1:
             if st.button("👔 More Formal", key="btn_let_formal", use_container_width=True):
@@ -336,20 +343,27 @@ with tab_letter:
                     st.rerun()
 
         with ref_c2:
+            if st.button("📝 More Detailed", key="btn_let_detailed", use_container_width=True):
+                with st.spinner("Elaborating letter..."):
+                    revised = refine_draft(edited_letter, "Substantially expand this formal letter with comprehensive background context, detailed justifications, specific requests, timeline, and courteous professional elaboration while preserving core facts.", model=selected_model)
+                    st.session_state.current_letter["text"] = revised
+                    st.rerun()
+
+        with ref_c3:
             if st.button("✂️ More Concise", key="btn_let_concise", use_container_width=True):
                 with st.spinner("Refining..."):
                     revised = refine_draft(edited_letter, "Make this letter concise, direct, and brief while maintaining formal structure.", model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
-        with ref_c3:
+        with ref_c4:
             if st.button("✨ Fix Grammar", key="btn_let_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
                     revised = refine_draft(edited_letter, "Correct grammatical structure, punctuation, sentence pacing, and formal salutations.", model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
-        with ref_c4:
+        with ref_c5:
             if st.button("🗑️ Clear Draft", key="btn_let_clear", use_container_width=True):
                 st.session_state.current_letter = None
                 st.rerun()
