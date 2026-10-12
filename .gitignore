@@ -1,0 +1,35 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment and secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Virtual environment
+.venv/
+env/
+venv/
+ENV/
+
+# Data storage & ChromaDB persistence
+data/chroma_db/
+data/history/*.json
+!data/history/.gitkeep
+
+# Streamlit temporary data
+.streamlit/secrets.toml
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Large model caches
+.cache/
+hf_cache/

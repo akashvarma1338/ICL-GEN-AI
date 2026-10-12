@@ -1,0 +1,48 @@
+# Professional Email Writing Guidelines and Reference Samples
+
+## 1. General Email Conventions
+- Always include a concise, descriptive Subject line that immediately indicates the email's topic and urgency (e.g., "Leave Application: [Dates] - [Your Name]", "Meeting Request: Q3 Project Review").
+- Use an appropriate professional greeting: "Dear [Name]", "Dear Mr./Ms./Dr. [Last Name]", or "Good morning/afternoon [Team/Name]".
+- Opening sentence: State the purpose of the email directly and courteously without unnecessary preamble.
+- Middle paragraphs: Provide clear, factual supporting details in bullet points or short paragraphs.
+- Call to Action (CTA): Clearly define what next steps are expected, deadlines, or requested feedback.
+- Professional Closing: "Best regards", "Kind regards", "Sincerely", followed by the sender's full name, designation, and contact details.
+
+## 2. Job Application Email Template & Guidelines
+- Subject: Application for [Job Title] Role - [Your Full Name]
+- Salutation: Dear [Hiring Manager Name / Recruitment Team],
+- Purpose: Express genuine interest in the vacancy and state where the opening was found.
+- Body: Highlight 2-3 key accomplishments or skills directly relevant to the role. Keep descriptions factual and aligned with the candidate's actual qualifications.
+- Closing: Express appreciation for their time, mention attached resume/portfolio, and state availability for an interview.
+- Signature: Full name, phone number, LinkedIn profile link.
+
+## 3. Leave Request Email Template & Guidelines
+- Subject: Leave Request Application: [Leave Dates] - [Employee Name]
+- Salutation: Dear [Manager's Name],
+- Purpose: Clearly state the requested duration and specific start and end dates.
+- Reason: State the reason (personal emergency, medical appointment, family commitment, planned vacation).
+- Work Handover: Explicitly describe arrangements made to cover urgent tasks during the absence. Mention which colleague will assist or act as point of contact.
+- Emergency Contact: Confirm whether you will have access to email or phone for urgent matters.
+- Closing: Thank the manager for their understanding and support.
+
+## 4. Meeting Request Email Template & Guidelines
+- Subject: Meeting Request: [Topic or Objective] - [Proposed Week/Date]
+- Salutation: Dear [Colleague/Client Name],
+- Purpose: Request a 20-30 minute meeting to discuss the specified agenda.
+- Agenda: Outline 2-3 specific talking points so the attendee can prepare.
+- Time Slots: Offer 2-3 convenient date/time options, or invite them to share their availability.
+- Closing: Look forward to connecting.
+
+## 5. Professional Follow-up Email Template & Guidelines
+- Subject: Follow-up regarding [Previous Subject / Interview / Proposal]
+- Salutation: Dear [Name],
+- Purpose: Politely reference the prior conversation, interview, or sent proposal from [Date].
+- Body: Reiterate appreciation and briefly restate the core value or inquiry.
+- Closing: Request an update at their earliest convenience and offer to provide any additional information needed.
+
+## 6. Apology and Resolution Email Guidelines
+- Subject: Apology regarding [Incident / Delay / Issue]
+- Salutation: Dear [Client / Manager Name],
+- Acknowledge: Take prompt responsibility for the oversight or delay without defensive excuses.
+- Corrective Action: State the concrete action taken to fix the issue and prevent future occurrences.
+- Closing: Reiterate commitment to quality and thank them for their patience.
