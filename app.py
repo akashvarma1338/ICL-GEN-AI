@@ -28,17 +28,52 @@ if str(APP_DIR) not in sys.path:
 load_dotenv(override=True)
 
 
-def get_config_var(key, default=""):
-    """Fetch configuration from Streamlit Cloud secrets or environment variables."""
+def find_groq_key():
+    """Thoroughly search for the Groq API key across Streamlit secrets and environment."""
+    load_dotenv(override=True)
+    # 1. Search Streamlit secrets
     try:
-        if hasattr(st, "secrets") and key in st.secrets:
-            val = str(st.secrets[key]).strip()
-            if val:
-                os.environ[key] = val
-                return val
+        if hasattr(st, "secrets"):
+            for k in ["GROQ_API_KEY", "groq_api_key", "GROQ_KEY", "groq_key"]:
+                try:
+                    if k in st.secrets:
+                        val = str(st.secrets[k]).strip().strip("'\"")
+                        if val:
+                            return val
+                except Exception:
+                    pass
+            for k in list(st.secrets.keys()):
+                if str(k).upper() in ["GROQ_API_KEY", "GROQ_KEY"]:
+                    val = str(st.secrets[k]).strip().strip("'\"")
+                    if val:
+                        return val
+            for section in list(st.secrets.keys()):
+                try:
+                    sec = st.secrets[section]
+                    if hasattr(sec, "items"):
+                        for sub_k, sub_v in sec.items():
+                            if str(sub_k).upper() in ["GROQ_API_KEY", "GROQ_KEY", "API_KEY"]:
+                                val = str(sub_v).strip().strip("'\"")
+                                if val:
+                                    return val
+                except Exception:
+                    pass
     except Exception:
         pass
-    return os.getenv(key, default).strip()
+
+    # 2. Search OS environment
+    for k in ["GROQ_API_KEY", "groq_api_key", "GROQ_KEY", "groq_key"]:
+        val = os.getenv(k, "").strip().strip("'\"")
+        if val:
+            return val
+
+    for k, v in os.environ.items():
+        if k.upper() in ["GROQ_API_KEY", "GROQ_KEY"]:
+            val = v.strip().strip("'\"")
+            if val:
+                return val
+
+    return ""
 
 
 from config import GROQ_MODELS, DEFAULT_GROQ_MODEL
@@ -93,28 +128,40 @@ st.markdown('<div class="main-header">✍️ WriteWise AI</div>', unsafe_allow_h
 st.markdown('<div class="sub-header">RAG-Powered Professional Email & Formal Letter Assistant</div>', unsafe_allow_html=True)
 
 # API Key check from Streamlit secrets or environment (with dynamic reload)
-load_dotenv(override=True)
-env_groq_key = get_config_var("GROQ_API_KEY", "")
+configured_key = find_groq_key()
 
 # Sidebar Settings
 with st.sidebar:
     st.header("⚙️ Settings")
 
     st.subheader("🔑 Groq API Key")
-    user_api_key = st.text_input(
-        "Groq API Key",
-        value=env_groq_key,
-        type="password",
-        help="Loaded automatically from Streamlit Secrets or .env. You can update or replace it here directly."
-    )
-    active_api_key = user_api_key.strip() if user_api_key.strip() else env_groq_key
-    has_api_key = bool(active_api_key)
+    if configured_key:
+        masked = (configured_key[:6] + "••••" + configured_key[-4:]) if len(configured_key) > 10 else "••••••••"
+        st.success(f"🟢 **API Key Connected** (`{masked}`)")
+        st.caption("Loaded automatically from your deployment secrets.")
 
+        with st.expander("⚙️ Override API Key", expanded=False):
+            override_key = st.text_input(
+                "Custom Key",
+                value="",
+                type="password",
+                placeholder="Paste key to override...",
+                help="Leave empty to continue using your configured deployment key."
+            ).strip()
+        active_api_key = override_key if override_key else configured_key
+    else:
+        st.warning("⚠️ **No API Key detected in Secrets**")
+        st.caption("Enter your key below, or configure `GROQ_API_KEY` in Streamlit Cloud Settings > Secrets:")
+        active_api_key = st.text_input(
+            "Groq API Key",
+            type="password",
+            placeholder="gsk_...",
+            help="Get a free key from console.groq.com/keys"
+        ).strip()
+
+    has_api_key = bool(active_api_key)
     if has_api_key:
         os.environ["GROQ_API_KEY"] = active_api_key
-        st.success("🟢 API Key active")
-    else:
-        st.warning("⚠️ No API Key found. Offline fallback mode will be used.")
 
     st.markdown("---")
     st.subheader("🧠 Model Selection")

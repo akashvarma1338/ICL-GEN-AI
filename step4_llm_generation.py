@@ -101,16 +101,51 @@ def _resolve_api_key(key_name, provided_key=None):
     """Retrieve API key from argument, Streamlit Cloud secrets, or environment."""
     if provided_key and str(provided_key).strip():
         return str(provided_key).strip()
+
+    search_keys = [key_name, key_name.lower(), key_name.replace("_API_", "_")]
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and key_name in st.secrets:
-            val = str(st.secrets[key_name]).strip()
-            if val:
-                return val
+        if hasattr(st, "secrets"):
+            for k in search_keys:
+                try:
+                    if k in st.secrets:
+                        val = str(st.secrets[k]).strip().strip("'\"")
+                        if val:
+                            return val
+                except Exception:
+                    pass
+            for k in list(st.secrets.keys()):
+                if str(k).upper() in [key_name.upper(), "GROQ_KEY", "API_KEY"]:
+                    val = str(st.secrets[k]).strip().strip("'\"")
+                    if val:
+                        return val
+            for section in list(st.secrets.keys()):
+                try:
+                    sec = st.secrets[section]
+                    if hasattr(sec, "items"):
+                        for sub_k, sub_v in sec.items():
+                            if str(sub_k).upper() in [key_name.upper(), "GROQ_KEY", "API_KEY"]:
+                                val = str(sub_v).strip().strip("'\"")
+                                if val:
+                                    return val
+                except Exception:
+                    pass
     except Exception:
         pass
+
     load_dotenv(override=True)
-    return os.getenv(key_name, "").strip()
+    for k in search_keys:
+        val = os.getenv(k, "").strip().strip("'\"")
+        if val:
+            return val
+
+    for k, v in os.environ.items():
+        if k.upper() == key_name.upper():
+            val = v.strip().strip("'\"")
+            if val:
+                return val
+
+    return ""
 
 
 def ask_groq(user_prompt, api_key=None, model=None):
