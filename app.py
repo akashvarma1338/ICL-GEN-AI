@@ -18,7 +18,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 # Load environment variables from .env
-load_dotenv()
+load_dotenv(override=True)
 
 from config import GROQ_MODELS, DEFAULT_GROQ_MODEL
 from step2_chromadb_storage import seed_sample_docs_if_empty
@@ -71,14 +71,31 @@ st.markdown("""
 st.markdown('<div class="main-header">✍️ WriteWise AI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">RAG-Powered Professional Email & Formal Letter Assistant</div>', unsafe_allow_html=True)
 
-# API Key check from environment
-has_api_key = bool(os.getenv("GROQ_API_KEY", "").strip())
-if not has_api_key:
-    st.warning("⚠️ No `GROQ_API_KEY` found in your `.env` file. Please set `GROQ_API_KEY` in `.env` to enable AI generation.")
+# API Key check from environment (with dynamic reload)
+load_dotenv(override=True)
+env_groq_key = os.getenv("GROQ_API_KEY", "").strip()
 
 # Sidebar Settings
 with st.sidebar:
-    st.header("⚙️ Model Settings")
+    st.header("⚙️ Settings")
+
+    st.subheader("🔑 Groq API Key")
+    user_api_key = st.text_input(
+        "Groq API Key",
+        value=env_groq_key,
+        type="password",
+        help="Loaded automatically from .env. You can update or replace it here directly."
+    )
+    active_api_key = user_api_key.strip() if user_api_key.strip() else env_groq_key
+    has_api_key = bool(active_api_key)
+
+    if has_api_key:
+        st.success("🟢 API Key active")
+    else:
+        st.warning("⚠️ No API Key found. Offline fallback mode will be used.")
+
+    st.markdown("---")
+    st.subheader("🧠 Model Selection")
     selected_model = st.selectbox(
         "Groq Model",
         GROQ_MODELS,
@@ -161,6 +178,7 @@ with tab_email:
                         doc_type="email",
                         requirements=reqs,
                         provider="groq" if has_api_key else "offline",
+                        api_key=active_api_key,
                         model=selected_model,
                         top_k=4,
                         similarity_threshold=0.25
@@ -168,7 +186,16 @@ with tab_email:
                     st.session_state.current_email = result
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Error generating email: {e}")
+                    err_msg = str(e)
+                    if "401" in err_msg or "invalid_api_key" in err_msg:
+                        st.error(
+                            "❌ **Groq API Error: Invalid API Key (401)**\n\n"
+                            "Your Groq API key was rejected. "
+                            "Please verify your key in `.env` or update it in the sidebar setting.\n\n"
+                            "Get a free API key at [console.groq.com/keys](https://console.groq.com/keys)."
+                        )
+                    else:
+                        st.error(f"Error generating email: {e}")
 
     # Output Section
     if st.session_state.current_email:
@@ -190,28 +217,28 @@ with tab_email:
         with ref_c1:
             if st.button("👔 More Formal", key="btn_em_formal", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Make this email draft more formal, polite, and professional.", model=selected_model)
+                    revised = refine_draft(edited_email, "Make this email draft more formal, polite, and professional.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
         with ref_c2:
             if st.button("📝 More Detailed", key="btn_em_detailed", use_container_width=True):
                 with st.spinner("Elaborating email..."):
-                    revised = refine_draft(edited_email, "Substantially expand and elaborate this email draft with comprehensive context, multi-paragraph explanations, background reasoning, timeline/coverage details, and structured next steps while preserving all core facts.", model=selected_model)
+                    revised = refine_draft(edited_email, "Substantially expand and elaborate this email draft with comprehensive context, multi-paragraph explanations, background reasoning, timeline/coverage details, and structured next steps while preserving all core facts.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
         with ref_c3:
             if st.button("✂️ More Concise", key="btn_em_concise", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Make this email draft concise, brief, and direct while preserving all essential details.", model=selected_model)
+                    revised = refine_draft(edited_email, "Make this email draft concise, brief, and direct while preserving all essential details.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
         with ref_c4:
             if st.button("✨ Fix Grammar", key="btn_em_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Correct all grammar, spelling, punctuation, and phrasing issues while keeping the meaning intact.", model=selected_model)
+                    revised = refine_draft(edited_email, "Correct all grammar, spelling, punctuation, and phrasing issues while keeping the meaning intact.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
@@ -309,6 +336,7 @@ with tab_letter:
                         doc_type="formal letter",
                         requirements=reqs,
                         provider="groq" if has_api_key else "offline",
+                        api_key=active_api_key,
                         model=selected_model,
                         top_k=4,
                         similarity_threshold=0.25
@@ -316,7 +344,16 @@ with tab_letter:
                     st.session_state.current_letter = result
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Error generating letter: {e}")
+                    err_msg = str(e)
+                    if "401" in err_msg or "invalid_api_key" in err_msg:
+                        st.error(
+                            "❌ **Groq API Error: Invalid API Key (401)**\n\n"
+                            "Your Groq API key was rejected. "
+                            "Please check `.env` or update your key in the sidebar setting.\n\n"
+                            "Get a free API key at [console.groq.com/keys](https://console.groq.com/keys)."
+                        )
+                    else:
+                        st.error(f"Error generating letter: {e}")
 
     # Output Section
     if st.session_state.current_letter:
@@ -338,28 +375,28 @@ with tab_letter:
         with ref_c1:
             if st.button("👔 More Formal", key="btn_let_formal", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Increase formal protocol, polite deference, and official terminology.", model=selected_model)
+                    revised = refine_draft(edited_letter, "Increase formal protocol, polite deference, and official terminology.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
         with ref_c2:
             if st.button("📝 More Detailed", key="btn_let_detailed", use_container_width=True):
                 with st.spinner("Elaborating letter..."):
-                    revised = refine_draft(edited_letter, "Substantially expand this formal letter with comprehensive background context, detailed justifications, specific requests, timeline, and courteous professional elaboration while preserving core facts.", model=selected_model)
+                    revised = refine_draft(edited_letter, "Substantially expand this formal letter with comprehensive background context, detailed justifications, specific requests, timeline, and courteous professional elaboration while preserving core facts.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
         with ref_c3:
             if st.button("✂️ More Concise", key="btn_let_concise", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Make this letter concise, direct, and brief while maintaining formal structure.", model=selected_model)
+                    revised = refine_draft(edited_letter, "Make this letter concise, direct, and brief while maintaining formal structure.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
         with ref_c4:
             if st.button("✨ Fix Grammar", key="btn_let_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Correct grammatical structure, punctuation, sentence pacing, and formal salutations.", model=selected_model)
+                    revised = refine_draft(edited_letter, "Correct grammatical structure, punctuation, sentence pacing, and formal salutations.", api_key=active_api_key, model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 

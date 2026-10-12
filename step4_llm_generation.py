@@ -15,7 +15,7 @@ import os
 from dotenv import load_dotenv
 from step3_retrieval import retrieve_context, format_context_for_llm
 
-load_dotenv()
+load_dotenv(override=True)
 
 from config import (
     GROQ_MODELS,
@@ -23,9 +23,6 @@ from config import (
     GEMINI_MODELS,
     DEFAULT_GEMINI_MODEL
 )
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 SYSTEM_PROMPT = (
     "You are an expert executive email and formal letter writing assistant.\n\n"
@@ -102,7 +99,8 @@ INSTRUCTIONS:
 
 def ask_groq(user_prompt, api_key=None, model=None):
     """Call Groq chat completion API with model fallback."""
-    key = api_key or GROQ_API_KEY
+    load_dotenv(override=True)
+    key = (api_key or os.getenv("GROQ_API_KEY", "")).strip()
     if not key:
         return None
 
@@ -138,7 +136,8 @@ def ask_groq(user_prompt, api_key=None, model=None):
 
 def ask_gemini(user_prompt, api_key=None, model=None):
     """Call Google Gemini API with model fallback."""
-    key = api_key or GEMINI_API_KEY
+    load_dotenv(override=True)
+    key = (api_key or os.getenv("GEMINI_API_KEY", "")).strip()
     if not key:
         return None
 
@@ -286,7 +285,8 @@ RULES:
 - Maintain any existing placeholders like names, dates, or contact details.
 - Do not add conversational intro or outro."""
 
-    key = api_key or os.getenv("GROQ_API_KEY", "")
+    load_dotenv(override=True)
+    key = (api_key or os.getenv("GROQ_API_KEY", "")).strip()
     if provider == "groq" and key:
         try:
             revised = ask_groq(prompt, api_key=key, model=model or DEFAULT_GROQ_MODEL)
