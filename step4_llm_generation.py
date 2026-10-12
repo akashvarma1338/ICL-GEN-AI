@@ -5,7 +5,7 @@ Based on: RAG_Step4_Passing_Context_to_Gemini_Groq_LLM.ipynb
 This module shows how to:
 1. Define a strict, grounded SYSTEM_PROMPT.
 2. Build the user prompt combining retrieved context and user requirements.
-3. Call Groq (with model fallback: llama-3.3-70b-versatile, llama-3.1-8b-instant).
+3. Call Groq (with model fallback: qwen/qwen3.8-27b, allam-2-7b, openai/gpt-oss-120b).
 4. Call Google Gemini (with model fallback: gemini-2.5-flash).
 5. Provide a fallback offline generator if no API key is provided.
 6. Provide a unified `generate_writing()` function.
@@ -17,11 +17,15 @@ from step3_retrieval import retrieve_context, format_context_for_llm
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+from config import (
+    GROQ_MODELS,
+    DEFAULT_GROQ_MODEL,
+    GEMINI_MODELS,
+    DEFAULT_GEMINI_MODEL
+)
 
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
 
 SYSTEM_PROMPT = (
     "You are a professional email and letter writing assistant.\n\n"
@@ -76,7 +80,10 @@ def ask_groq(user_prompt, api_key=None, model=None):
     from groq import Groq
     client = Groq(api_key=key)
 
-    models_to_try = [model] if model else GROQ_MODELS
+    if model:
+        models_to_try = [model] + [m for m in GROQ_MODELS if m != model]
+    else:
+        models_to_try = GROQ_MODELS
     last_error = None
 
     for m in models_to_try:
@@ -143,10 +150,12 @@ def ask_offline_fallback(doc_type, requirements):
     sender = requirements.get("Sender", "[Your Name]")
     subject = requirements.get("Subject", "Professional Correspondence")
     details = requirements.get("Details", "the discussed matter")
+    date_val = requirements.get("Date", "")
 
     if doc_type.lower() == "email":
+        date_header = f"Date: {date_val}\n" if date_val else ""
         return f"""Subject: {subject}
-
+{date_header}
 Dear {recipient},
 
 I hope this email finds you well.
@@ -214,9 +223,9 @@ def generate_writing(
     # 3. Call LLM
     answer = None
     if provider == "gemini":
-        answer = ask_gemini(user_prompt, api_key=api_key, model=model)
+        answer = ask_gemini(user_prompt, api_key=api_key, model=model or DEFAULT_GEMINI_MODEL)
     elif provider == "groq":
-        answer = ask_groq(user_prompt, api_key=api_key, model=model)
+        answer = ask_groq(user_prompt, api_key=api_key, model=model or DEFAULT_GROQ_MODEL)
 
     # If no API key or provider is offline, use offline fallback
     if not answer:
@@ -251,7 +260,7 @@ RULES:
     key = api_key or os.getenv("GROQ_API_KEY", "")
     if provider == "groq" and key:
         try:
-            revised = ask_groq(prompt, api_key=key, model=model)
+            revised = ask_groq(prompt, api_key=key, model=model or DEFAULT_GROQ_MODEL)
             if revised:
                 return revised
         except Exception:

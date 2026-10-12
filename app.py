@@ -20,6 +20,7 @@ if str(APP_DIR) not in sys.path:
 # Load environment variables from .env
 load_dotenv()
 
+from config import GROQ_MODELS, DEFAULT_GROQ_MODEL
 from step2_chromadb_storage import seed_sample_docs_if_empty
 from step4_llm_generation import generate_writing, refine_draft
 
@@ -75,6 +76,19 @@ has_api_key = bool(os.getenv("GROQ_API_KEY", "").strip())
 if not has_api_key:
     st.warning("⚠️ No `GROQ_API_KEY` found in your `.env` file. Please set `GROQ_API_KEY` in `.env` to enable AI generation.")
 
+# Sidebar Settings
+with st.sidebar:
+    st.header("⚙️ Model Settings")
+    selected_model = st.selectbox(
+        "Groq Model",
+        GROQ_MODELS,
+        index=GROQ_MODELS.index(DEFAULT_GROQ_MODEL) if DEFAULT_GROQ_MODEL in GROQ_MODELS else 0,
+        help="Select which LLM model to query on Groq."
+    )
+    st.markdown("---")
+    st.markdown("### 📚 Knowledge Base")
+    st.caption("Grounding drafts with style rules & templates stored in ChromaDB.")
+
 # Initialize Session State
 if "current_email" not in st.session_state:
     st.session_state.current_email = None
@@ -113,6 +127,7 @@ with tab_email:
             recipient_name = st.text_input("Recipient Name / Designation *", placeholder="e.g., Dr. Sarah Jenkins / Hiring Manager")
             sender_name = st.text_input("Sender Name *", placeholder="e.g., Alex Taylor")
             subject = st.text_input("Subject or Topic *", placeholder="e.g., Sick Leave Application - Oct 14 / Project Update")
+            date_str = st.text_input("Date", value=datetime.now().strftime("%B %d, %Y"))
 
         with col2:
             tone = st.selectbox("Tone", ["Professional", "Formal", "Polite", "Friendly", "Urgent"])
@@ -134,6 +149,7 @@ with tab_email:
                 "Recipient": recipient_name.strip(),
                 "Sender": sender_name.strip(),
                 "Subject": subject.strip(),
+                "Date": date_str.strip(),
                 "Details": details.strip(),
                 "Tone": tone,
                 "Length": length
@@ -145,6 +161,7 @@ with tab_email:
                         doc_type="email",
                         requirements=reqs,
                         provider="groq" if has_api_key else "offline",
+                        model=selected_model,
                         top_k=4,
                         similarity_threshold=0.25
                     )
@@ -173,21 +190,21 @@ with tab_email:
         with ref_c1:
             if st.button("👔 More Formal", key="btn_em_formal", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Make this email draft more formal, polite, and professional.")
+                    revised = refine_draft(edited_email, "Make this email draft more formal, polite, and professional.", model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
         with ref_c2:
             if st.button("✂️ More Concise", key="btn_em_concise", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Make this email draft concise, brief, and direct while preserving all essential details.")
+                    revised = refine_draft(edited_email, "Make this email draft concise, brief, and direct while preserving all essential details.", model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
         with ref_c3:
             if st.button("✨ Fix Grammar", key="btn_em_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_email, "Correct all grammar, spelling, punctuation, and phrasing issues while keeping the meaning intact.")
+                    revised = refine_draft(edited_email, "Correct all grammar, spelling, punctuation, and phrasing issues while keeping the meaning intact.", model=selected_model)
                     st.session_state.current_email["text"] = revised
                     st.rerun()
 
@@ -285,6 +302,7 @@ with tab_letter:
                         doc_type="formal letter",
                         requirements=reqs,
                         provider="groq" if has_api_key else "offline",
+                        model=selected_model,
                         top_k=4,
                         similarity_threshold=0.25
                     )
@@ -313,21 +331,21 @@ with tab_letter:
         with ref_c1:
             if st.button("👔 More Formal", key="btn_let_formal", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Increase formal protocol, polite deference, and official terminology.")
+                    revised = refine_draft(edited_letter, "Increase formal protocol, polite deference, and official terminology.", model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
         with ref_c2:
             if st.button("✂️ More Concise", key="btn_let_concise", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Make this letter concise, direct, and brief while maintaining formal structure.")
+                    revised = refine_draft(edited_letter, "Make this letter concise, direct, and brief while maintaining formal structure.", model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 
         with ref_c3:
             if st.button("✨ Fix Grammar", key="btn_let_grammar", use_container_width=True):
                 with st.spinner("Refining..."):
-                    revised = refine_draft(edited_letter, "Correct grammatical structure, punctuation, sentence pacing, and formal salutations.")
+                    revised = refine_draft(edited_letter, "Correct grammatical structure, punctuation, sentence pacing, and formal salutations.", model=selected_model)
                     st.session_state.current_letter["text"] = revised
                     st.rerun()
 

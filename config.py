@@ -41,8 +41,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODELS = [
     "qwen/qwen3.8-27b",
     "allam-2-7b",
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant"
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b"
 ]
 DEFAULT_GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 
