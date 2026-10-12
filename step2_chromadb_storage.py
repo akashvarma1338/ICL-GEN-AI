@@ -12,6 +12,15 @@ This module shows how to:
 """
 
 import os
+
+# Linux / Streamlit Community Cloud SQLite fix for ChromaDB
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import chromadb
 from chromadb.utils import embedding_functions
 

@@ -97,10 +97,25 @@ INSTRUCTIONS:
     return prompt
 
 
+def _resolve_api_key(key_name, provided_key=None):
+    """Retrieve API key from argument, Streamlit Cloud secrets, or environment."""
+    if provided_key and str(provided_key).strip():
+        return str(provided_key).strip()
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and key_name in st.secrets:
+            val = str(st.secrets[key_name]).strip()
+            if val:
+                return val
+    except Exception:
+        pass
+    load_dotenv(override=True)
+    return os.getenv(key_name, "").strip()
+
+
 def ask_groq(user_prompt, api_key=None, model=None):
     """Call Groq chat completion API with model fallback."""
-    load_dotenv(override=True)
-    key = (api_key or os.getenv("GROQ_API_KEY", "")).strip()
+    key = _resolve_api_key("GROQ_API_KEY", api_key)
     if not key:
         return None
 
@@ -136,8 +151,7 @@ def ask_groq(user_prompt, api_key=None, model=None):
 
 def ask_gemini(user_prompt, api_key=None, model=None):
     """Call Google Gemini API with model fallback."""
-    load_dotenv(override=True)
-    key = (api_key or os.getenv("GEMINI_API_KEY", "")).strip()
+    key = _resolve_api_key("GEMINI_API_KEY", api_key)
     if not key:
         return None
 
@@ -285,8 +299,7 @@ RULES:
 - Maintain any existing placeholders like names, dates, or contact details.
 - Do not add conversational intro or outro."""
 
-    load_dotenv(override=True)
-    key = (api_key or os.getenv("GROQ_API_KEY", "")).strip()
+    key = _resolve_api_key("GROQ_API_KEY", api_key)
     if provider == "groq" and key:
         try:
             revised = ask_groq(prompt, api_key=key, model=model or DEFAULT_GROQ_MODEL)

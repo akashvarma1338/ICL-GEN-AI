@@ -4,13 +4,20 @@ Powered by RAG (ChromaDB + Sentence Transformers + Groq LLM).
 API key is strictly loaded from the .env file.
 """
 
+# Linux / Streamlit Community Cloud SQLite fix for ChromaDB
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import os
+import sys
 from datetime import datetime
+from pathlib import Path
 import streamlit as st
 from dotenv import load_dotenv
-
-import sys
-from pathlib import Path
 
 # Ensure application directory is always in sys.path
 APP_DIR = Path(__file__).resolve().parent
@@ -19,6 +26,20 @@ if str(APP_DIR) not in sys.path:
 
 # Load environment variables from .env
 load_dotenv(override=True)
+
+
+def get_config_var(key, default=""):
+    """Fetch configuration from Streamlit Cloud secrets or environment variables."""
+    try:
+        if hasattr(st, "secrets") and key in st.secrets:
+            val = str(st.secrets[key]).strip()
+            if val:
+                os.environ[key] = val
+                return val
+    except Exception:
+        pass
+    return os.getenv(key, default).strip()
+
 
 from config import GROQ_MODELS, DEFAULT_GROQ_MODEL
 from step2_chromadb_storage import seed_sample_docs_if_empty
@@ -71,9 +92,9 @@ st.markdown("""
 st.markdown('<div class="main-header">✍️ WriteWise AI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">RAG-Powered Professional Email & Formal Letter Assistant</div>', unsafe_allow_html=True)
 
-# API Key check from environment (with dynamic reload)
+# API Key check from Streamlit secrets or environment (with dynamic reload)
 load_dotenv(override=True)
-env_groq_key = os.getenv("GROQ_API_KEY", "").strip()
+env_groq_key = get_config_var("GROQ_API_KEY", "")
 
 # Sidebar Settings
 with st.sidebar:
@@ -84,12 +105,13 @@ with st.sidebar:
         "Groq API Key",
         value=env_groq_key,
         type="password",
-        help="Loaded automatically from .env. You can update or replace it here directly."
+        help="Loaded automatically from Streamlit Secrets or .env. You can update or replace it here directly."
     )
     active_api_key = user_api_key.strip() if user_api_key.strip() else env_groq_key
     has_api_key = bool(active_api_key)
 
     if has_api_key:
+        os.environ["GROQ_API_KEY"] = active_api_key
         st.success("🟢 API Key active")
     else:
         st.warning("⚠️ No API Key found. Offline fallback mode will be used.")
