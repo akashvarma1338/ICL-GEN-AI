@@ -49,20 +49,22 @@ DEFAULT_LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODELS = [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
     "qwen/qwen3.8-27b",
     "allam-2-7b",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b"
 ]
-DEFAULT_GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+DEFAULT_GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+
+# Models that support reasoning_effort parameter
+REASONING_MODELS = {"openai/gpt-oss-120b", "openai/gpt-oss-20b"}
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODELS = [
-    "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash"
+    "gemini-1.5-flash",
 ]
-DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 # Upload constraints
 MAX_FILE_SIZE_MB = 10

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Step 4: Passing Context to LLM (Groq / Gemini)
 Based on: RAG_Step4_Passing_Context_to_Gemini_Groq_LLM.ipynb
 
@@ -20,6 +20,7 @@ load_dotenv(override=True)
 from config import (
     GROQ_MODELS,
     DEFAULT_GROQ_MODEL,
+    REASONING_MODELS,
     GEMINI_MODELS,
     DEFAULT_GEMINI_MODEL
 )
@@ -149,7 +150,7 @@ def _resolve_api_key(key_name, provided_key=None):
 
 
 def ask_groq(user_prompt, api_key=None, model=None):
-    """Call Groq chat completion API with model fallback."""
+    """Call Groq chat completion API with model fallback, supporting reasoning models and streaming."""
     key = _resolve_api_key("GROQ_API_KEY", api_key)
     if not key:
         return None
@@ -163,23 +164,51 @@ def ask_groq(user_prompt, api_key=None, model=None):
         models_to_try = GROQ_MODELS
     last_error = None
 
+    _SKIP_PHRASES = ("model_decommissioned", "model_not_found", "model_not_active",
+                     "decommissioned", "no longer supported")
+
     for m in models_to_try:
         if not m:
             continue
         try:
-            response = client.chat.completions.create(
-                model=m,
-                messages=[
+            kwargs = {
+                "model": m,
+                "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.3,
-                max_tokens=3000
-            )
-            if response.choices and response.choices[0].message.content:
-                return response.choices[0].message.content.strip()
+                "stream": True,
+                "stop": None,
+            }
+
+            # Check if model supports reasoning parameters (e.g. openai/gpt-oss-120b)
+            is_reasoning = (m in REASONING_MODELS) or m.startswith("openai/")
+            if is_reasoning:
+                kwargs["temperature"] = 1
+                kwargs["max_completion_tokens"] = 2048
+                kwargs["top_p"] = 1
+                kwargs["reasoning_effort"] = "medium"
+            else:
+                kwargs["temperature"] = 0.3
+                kwargs["max_tokens"] = 3000
+
+            response = client.chat.completions.create(**kwargs)
+            full_text = []
+            for chunk in response:
+                if chunk.choices and len(chunk.choices) > 0 and chunk.choices[0].delta:
+                    content_chunk = chunk.choices[0].delta.content or ""
+                    full_text.append(content_chunk)
+
+            result = "".join(full_text).strip()
+            if result:
+                return result
         except Exception as e:
             last_error = e
+            err_str = str(e)
+            if any(phrase in err_str for phrase in _SKIP_PHRASES):
+                continue
+            if "401" in err_str or "invalid_api_key" in err_str:
+                raise
 
     raise RuntimeError(f"Groq API error: {last_error}")
 
@@ -321,6 +350,9 @@ def refine_draft(current_draft, instruction, provider="groq", api_key=None, mode
     Refine an existing draft (email or letter) based on a specific instruction.
     e.g. 'Make it more formal', 'Make it concise', 'Fix grammar'.
     """
+    if not current_draft or not current_draft.strip():
+        return current_draft
+
     prompt = f"""You are a professional editor. Revise the following draft according to this instruction:
 INSTRUCTION: {instruction}
 
@@ -336,12 +368,9 @@ RULES:
 
     key = _resolve_api_key("GROQ_API_KEY", api_key)
     if provider == "groq" and key:
-        try:
-            revised = ask_groq(prompt, api_key=key, model=model or DEFAULT_GROQ_MODEL)
-            if revised:
-                return revised
-        except Exception:
-            pass
+        revised = ask_groq(prompt, api_key=key, model=model or DEFAULT_GROQ_MODEL)
+        if revised and revised.strip():
+            return revised.strip()
 
     return current_draft
 
