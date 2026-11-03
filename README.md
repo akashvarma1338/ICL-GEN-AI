@@ -1,3 +1,4 @@
+The project livelink is:https://emailassisstant.streamlit.app/
 # WriteWise AI — RAG-Based Email & Letter Writing Assistant
 
 WriteWise AI is an end-to-end **Retrieval-Augmented Generation (RAG)** application built with **Streamlit**, **LangChain**, **ChromaDB**, **Sentence Transformers**, and **Groq LLM**. It assists users in drafting grounded, grammatically polished, and professionally structured emails and formal letters using their own uploaded reference documents and style guidelines.
